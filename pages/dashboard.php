@@ -5,7 +5,13 @@ require_once('../config/auth.php');
 
 $id_user = $_SESSION['id_user'];
 
-$tiket = $conn->query("SELECT COUNT(*) FROM tiket WHERE id_user = $id_user AND status = 'LUNAS'")->fetch_row()[0];
+// $tiket = $conn->query("SELECT COUNT(*) FROM tiket WHERE id_user = $id_user AND status = 'LUNAS'")->fetch_row()[0];
+$tiket = $conn->query("
+  SELECT COUNT(*) 
+  FROM view_tiket_pengguna 
+  WHERE id_user = $id_user AND status = 'LUNAS'
+")->fetch_row()[0];
+
 $wishlist = $conn->query("SELECT COUNT(*) FROM wishlist WHERE id_user = $id_user")->fetch_row()[0];
 $rating = $conn->query("SELECT COUNT(*) FROM rating WHERE id_user = $id_user")->fetch_row()[0];
 

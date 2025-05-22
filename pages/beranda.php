@@ -7,14 +7,16 @@ $id_user = $_SESSION['id_user'] ?? null;
 $nama_user = $_SESSION['nama_lengkap'] ?? 'Guest';
 
 // Ambil data film + rating + wishlist
-$film = $conn->query("
-  SELECT f.*, 
-    (SELECT ROUND(AVG(r.rating),1) FROM rating r WHERE r.id_film = f.id_film) AS avg_rating,
-    EXISTS(SELECT 1 FROM wishlist w WHERE w.id_user = $id_user AND w.id_film = f.id_film) AS wishlisted
-  FROM film f 
-  ORDER BY tanggal_tayang DESC 
-  LIMIT 10
-");
+// $film = $conn->query("
+//   SELECT f.*, 
+//     (SELECT ROUND(AVG(r.rating),1) FROM rating r WHERE r.id_film = f.id_film) AS avg_rating,
+//     EXISTS(SELECT 1 FROM wishlist w WHERE w.id_user = $id_user AND w.id_film = f.id_film) AS wishlisted
+//   FROM film f 
+//   ORDER BY tanggal_tayang DESC 
+//   LIMIT 10
+// ");
+$film = $conn->query("SELECT * FROM view_film_rating ORDER BY tanggal_tayang DESC LIMIT 10");
+
 
 // Foto profil user
 $user = $conn->query("SELECT foto_profil FROM users WHERE id_user = $id_user")->fetch_assoc();

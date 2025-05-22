@@ -19,19 +19,23 @@ if (!$film) {
 }
 
 // Ambil jadwal
-$jadwal = $conn->query("SELECT * FROM jadwal WHERE id_film = $id_film ORDER BY waktu_tayang ASC");
+// $jadwal = $conn->query("SELECT * FROM jadwal WHERE id_film = $id_film ORDER BY waktu_tayang ASC");
+$jadwal = $conn->query("CALL sp_jadwal_film($id_film)");
+$conn->next_result();
 
 // Wishlist user
 $wishlist = $conn->query("SELECT * FROM wishlist WHERE id_user = $id_user AND id_film = $id_film")->num_rows > 0;
 
 // Rating
-$rating_result = $conn->query("
-  SELECT r.rating, r.ulasan, r.created_at, u.nama_lengkap 
-  FROM rating r 
-  JOIN users u ON r.id_user = u.id_user 
-  WHERE r.id_film = $id_film 
-  ORDER BY r.created_at DESC
-");
+$rating_result = $conn->query("CALL sp_rating_film($id_film)");
+$conn->next_result();
+// $rating_result = $conn->query("
+//   SELECT r.rating, r.ulasan, r.created_at, u.nama_lengkap 
+//   FROM rating r 
+//   JOIN users u ON r.id_user = u.id_user 
+//   WHERE r.id_film = $id_film 
+//   ORDER BY r.created_at DESC
+// ");
 
 // Foto profil user
 $user = $conn->query("SELECT foto_profil FROM users WHERE id_user = $id_user")->fetch_assoc();

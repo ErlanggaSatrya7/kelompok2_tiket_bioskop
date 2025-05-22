@@ -19,12 +19,15 @@ if (!$film) {
 }
 
 // Ambil semua jadwal film
-$jadwal_result = $conn->query("
-  SELECT j.*, s.nama_studio 
-  FROM jadwal j 
-  JOIN studio s ON j.id_studio = s.id_studio 
-  WHERE j.id_film = $id_film
-");
+// $jadwal_result = $conn->query("
+//   SELECT j.*, s.nama_studio 
+//   FROM jadwal j 
+//   JOIN studio s ON j.id_studio = s.id_studio 
+//   WHERE j.id_film = $id_film
+// ");
+$jadwal_result = $conn->query("CALL sp_jadwal_film($id_film)");
+$conn->next_result(); // jika ada query berikutnya setelah CALL
+
 
 $selected_jadwal = $_GET['jadwal'] ?? null;
 $kursi_terisi = [];
