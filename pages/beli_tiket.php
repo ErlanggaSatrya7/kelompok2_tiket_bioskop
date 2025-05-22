@@ -41,7 +41,7 @@ if ($selected_jadwal) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $id_jadwal = $_POST['id_jadwal'];
   $kursi = $_POST['kursi'] ?? [];
-  
+
   if (!$id_jadwal || count($kursi) === 0) {
     $error = "Pilih jadwal dan kursi terlebih dahulu.";
   } else {
@@ -98,9 +98,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           for ($j = 1; $j <= 8; $j++) {
             $no_kursi = $rows[$i] . $j;
             $disabled = in_array($no_kursi, $kursi_terisi);
-            echo '<label class="cursor-pointer">';
-            echo '<input type="checkbox" name="kursi[]" value="'. $no_kursi .'" '. ($disabled ? 'disabled' : '') .' class="hidden">';
-            echo '<div class="text-center border rounded py-2 '. ($disabled ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-white hover:bg-purple-100') .'">'. $no_kursi .'</div>';
+            echo '<label class="cursor-pointer relative group">';
+            echo '<input type="checkbox" name="kursi[]" value="'. $no_kursi .'" '. ($disabled ? 'disabled' : '') .' class="hidden peer">';
+            echo '<div class="text-center border rounded py-2 transition-all duration-200 text-sm
+                  '. ($disabled 
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : 'bg-white hover:bg-purple-100 peer-checked:bg-purple-600 peer-checked:text-white peer-checked:font-semibold peer-checked:shadow-lg') .'">'
+                  . $no_kursi .'</div>';
             echo '</label>';
           }
         }
