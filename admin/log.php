@@ -10,13 +10,19 @@ if (!isset($_SESSION['id_user']) || strtolower($_SESSION['role']) !== 'admin') {
 $search = trim($_GET['search'] ?? '');
 $where = $search ? "WHERE u.nama_lengkap LIKE '%$search%' OR u.role LIKE '%$search%' OR l.aksi LIKE '%$search%' OR l.deskripsi LIKE '%$search%'" : '';
 
+// $query = "
+// SELECT l.*, u.nama_lengkap, u.role
+// FROM log_aktivitas l
+// JOIN users u ON l.id_user = u.id_user
+// $where
+// ORDER BY l.waktu DESC
+// ";
 $query = "
-SELECT l.*, u.nama_lengkap, u.role
-FROM log_aktivitas l
-JOIN users u ON l.id_user = u.id_user
+SELECT * FROM view_log_aktivitas_pengguna
 $where
-ORDER BY l.waktu DESC
+ORDER BY waktu DESC
 ";
+
 $result = $conn->query($query);
 ?>
 
@@ -78,10 +84,10 @@ $result = $conn->query($query);
 
   <!-- Tombol Export -->
   <div class="flex justify-end gap-2 mb-4">
-    <a href="export_log_excel.php" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2">
+    <a href="export/excel/export_log_excel.php"" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2">
       <i data-lucide='file-spreadsheet'></i> Excel
     </a>
-    <a href="export_log_pdf.php" target="_blank" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 flex items-center gap-2">
+    <a href="export/pdf/export_log_pdf.php" target="_blank" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 flex items-center gap-2">
       <i data-lucide='file-text'></i> PDF
     </a>
   </div>
