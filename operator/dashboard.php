@@ -1,42 +1,38 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+session_start();
 require_once('../config/koneksi.php');
 require_once('../config/auth.php');
 require_role('operator');
 
 $id_user = $_SESSION['id_user'];
 
-// Ambil id bioskop operator
-$stmt = $conn->prepare("SELECT id_bioskop FROM users WHERE id_user = ?");
-$stmt->bind_param("i", $id_user);
-$stmt->execute();
-$stmt->bind_result($id_bioskop);
-$stmt->fetch();
-$stmt->close();
+// Ambil data operator & bioskop
+$user_stmt = $conn->prepare("SELECT u.nama_lengkap, b.nama_bioskop FROM users u JOIN bioskop b ON u.id_bioskop = b.id_bioskop WHERE u.id_user = ?");
+$user_stmt->bind_param("i", $id_user);
+$user_stmt->execute();
+$user_stmt->bind_result($nama_operator, $nama_bioskop);
+$user_stmt->fetch();
+$user_stmt->close();
 
-// Hitung tiket hari ini
-$today = date('Y-m-d');
-$data = [];
-$label = [];
+// Hitung total studio
+$studio_result = $conn->query("SELECT COUNT(*) AS total FROM studio WHERE id_bioskop = (SELECT id_bioskop FROM users WHERE id_user = $id_user)");
+$total_studio = $studio_result->fetch_assoc()['total'];
 
-$tiket_hari = $conn->query("SELECT COUNT(*) FROM tiket t JOIN jadwal j ON t.id_film = j.id_film JOIN studio s ON j.id_studio = s.id_studio WHERE s.id_bioskop = $id_bioskop AND DATE(t.created_at) = '$today'")->fetch_row()[0];
+// Hitung total jadwal tayang
+$jadwal_result = $conn->query("SELECT COUNT(*) AS total FROM jadwal WHERE id_studio IN (SELECT id_studio FROM studio WHERE id_bioskop = (SELECT id_bioskop FROM users WHERE id_user = $id_user))");
+$total_jadwal = $jadwal_result->fetch_assoc()['total'];
 
-// Data grafik 7 hari terakhir
-for ($i = 6; $i >= 0; $i--) {
-  $tgl = date('Y-m-d', strtotime("-$i days"));
-  $label[] = date('d M', strtotime($tgl));
-  $jumlah = $conn->query("SELECT COUNT(*) FROM tiket t JOIN jadwal j ON t.id_film = j.id_film JOIN studio s ON j.id_studio = s.id_studio WHERE s.id_bioskop = $id_bioskop AND DATE(t.created_at) = '$tgl'")->fetch_row()[0];
-  $data[] = $jumlah;
-}
+// Hitung total tiket terjual
+$tiket_result = $conn->query("SELECT COUNT(*) AS total FROM tiket WHERE status IN ('dibayar','digunakan') AND id_jadwal IN (SELECT id_jadwal FROM jadwal WHERE id_studio IN (SELECT id_studio FROM studio WHERE id_bioskop = (SELECT id_bioskop FROM users WHERE id_user = $id_user)))");
+$total_tiket = $tiket_result->fetch_assoc()['total'];
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Laporan | Operator</title>
+  <title>Dashboard Operator | JATIX</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 flex min-h-screen">
@@ -47,63 +43,38 @@ for ($i = 6; $i >= 0; $i--) {
       <i data-lucide="video"></i> JATIX Operator
     </h2>
     <nav class="space-y-2 text-sm">
-      <a href="dashboard.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+      <a href="dashboard.php" class="flex items-center gap-2 px-3 py-2 rounded bg-purple-100 text-purple-700 font-semibold"><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="studio.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="building"></i> Studio</a>
       <a href="jadwal.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="calendar-clock"></i> Jadwal</a>
       <a href="tiket.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="ticket"></i> Tiket</a>
-      <a href="laporan.php" class="flex items-center gap-2 px-3 py-2 rounded bg-purple-100 text-purple-700"><i data-lucide="file-text"></i> Laporan</a>
+      <a href="laporan.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="file-text"></i> Laporan</a>
       <a href="../pages/logout.php" class="flex items-center gap-2 px-3 py-2 mt-4 rounded bg-red-100 text-red-700 hover:bg-red-200"><i data-lucide="log-out"></i> Logout</a>
     </nav>
   </aside>
 
-  <!-- Main -->
+  <!-- Main Content -->
   <main class="ml-64 p-8 w-full">
-    <h1 class="text-2xl font-bold mb-6 flex items-center gap-2"><i data-lucide="file-text"></i> Laporan Tiket</h1>
+    <h1 class="text-2xl font-bold text-purple-700 mb-2">📊 Dashboard Operator</h1>
+    <p class="text-sm text-gray-500 mb-6">Operator: <strong><?= htmlspecialchars($nama_operator) ?></strong> — <strong><?= htmlspecialchars($nama_bioskop) ?></strong></p>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-      <div class="bg-white p-4 rounded shadow">
-        <p class="text-sm text-gray-500">Tiket Hari Ini</p>
-        <p class="text-3xl font-bold text-purple-700"><?= $tiket_hari ?></p>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white rounded-lg shadow p-5">
+        <h2 class="text-sm text-gray-500">Total Studio</h2>
+        <p class="text-3xl font-bold text-purple-600 mt-2">🏢 <?= $total_studio ?></p>
       </div>
-    </div>
 
-    <div class="bg-white p-6 rounded shadow">
-      <h2 class="text-lg font-semibold mb-4">📊 Tiket Terjual 7 Hari Terakhir</h2>
-      <canvas id="chartTiket" height="120"></canvas>
+      <div class="bg-white rounded-lg shadow p-5">
+        <h2 class="text-sm text-gray-500">Jadwal Tayang</h2>
+        <p class="text-3xl font-bold text-blue-600 mt-2">🗓 <?= $total_jadwal ?></p>
+      </div>
+
+      <div class="bg-white rounded-lg shadow p-5">
+        <h2 class="text-sm text-gray-500">Tiket Terjual</h2>
+        <p class="text-3xl font-bold text-green-600 mt-2">🎟 <?= $total_tiket ?></p>
+      </div>
     </div>
   </main>
 
-  <script>
-    lucide.createIcons();
-
-    const ctx = document.getElementById('chartTiket').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: <?= json_encode($label) ?>,
-        datasets: [{
-          label: 'Tiket Terjual',
-          data: <?= json_encode($data) ?>,
-          borderColor: '#8b5cf6',
-          backgroundColor: 'rgba(139, 92, 246, 0.2)',
-          tension: 0.4,
-          fill: true,
-          pointRadius: 5,
-          pointHoverRadius: 7
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              precision: 0
-            }
-          }
-        }
-      }
-    });
-  </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>

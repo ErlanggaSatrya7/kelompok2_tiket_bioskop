@@ -1,4 +1,5 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) session_start();
 require_once('../config/koneksi.php');
 require_once('../config/auth.php');
 require_role('operator');
@@ -13,17 +14,14 @@ $stmt->bind_result($id_bioskop);
 $stmt->fetch();
 $stmt->close();
 
-// Hitung statistik
+// Hitung tiket hari ini
 $today = date('Y-m-d');
-$this_week = date('Y-m-d', strtotime('-6 days'));
+$data = [];
+$label = [];
 
 $tiket_hari = $conn->query("SELECT COUNT(*) FROM tiket t JOIN jadwal j ON t.id_film = j.id_film JOIN studio s ON j.id_studio = s.id_studio WHERE s.id_bioskop = $id_bioskop AND DATE(t.created_at) = '$today'")->fetch_row()[0];
-$checkin_hari = $conn->query("SELECT COUNT(*) FROM checkin_log cl JOIN tiket t ON cl.id_tiket = t.id_tiket JOIN jadwal j ON t.id_film = j.id_film JOIN studio s ON j.id_studio = s.id_studio WHERE s.id_bioskop = $id_bioskop AND DATE(cl.waktu_checkin) = '$today'")->fetch_row()[0];
-$film_hari = $conn->query("SELECT COUNT(DISTINCT j.id_film) FROM jadwal j JOIN studio s ON j.id_studio = s.id_studio WHERE s.id_bioskop = $id_bioskop AND DATE(j.waktu_tayang) = '$today'")->fetch_row()[0];
-$jadwal_hari = $conn->query("SELECT COUNT(*) FROM jadwal j JOIN studio s ON j.id_studio = s.id_studio WHERE s.id_bioskop = $id_bioskop AND DATE(j.waktu_tayang) = '$today'")->fetch_row()[0];
 
 // Data grafik 7 hari terakhir
-$data = [];
 for ($i = 6; $i >= 0; $i--) {
   $tgl = date('Y-m-d', strtotime("-$i days"));
   $label[] = date('d M', strtotime($tgl));
@@ -52,35 +50,20 @@ for ($i = 6; $i >= 0; $i--) {
       <a href="dashboard.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="studio.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="building"></i> Studio</a>
       <a href="jadwal.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="calendar-clock"></i> Jadwal</a>
-      <!-- <a href="scan_qr.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="scan"></i> Scan Tiket</a> -->
       <a href="tiket.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="ticket"></i> Tiket</a>
-      <!-- <a href="validasi_checkin.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="file-text"></i> Validasi Checkin</a> -->
       <a href="laporan.php" class="flex items-center gap-2 px-3 py-2 rounded bg-purple-100 text-purple-700"><i data-lucide="file-text"></i> Laporan</a>
-      <!-- <a href="audit_tiket.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="scan-line"></i> Audit Tiket</a> -->
       <a href="../pages/logout.php" class="flex items-center gap-2 px-3 py-2 mt-4 rounded bg-red-100 text-red-700 hover:bg-red-200"><i data-lucide="log-out"></i> Logout</a>
     </nav>
   </aside>
 
   <!-- Main -->
   <main class="ml-64 p-8 w-full">
-    <h1 class="text-2xl font-bold mb-6 flex items-center gap-2"><i data-lucide="file-text"></i> Laporan Ringkas</h1>
+    <h1 class="text-2xl font-bold mb-6 flex items-center gap-2"><i data-lucide="file-text"></i> Laporan Tiket</h1>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       <div class="bg-white p-4 rounded shadow">
         <p class="text-sm text-gray-500">Tiket Hari Ini</p>
         <p class="text-3xl font-bold text-purple-700"><?= $tiket_hari ?></p>
-      </div>
-      <div class="bg-white p-4 rounded shadow">
-        <p class="text-sm text-gray-500">Check-In Hari Ini</p>
-        <p class="text-3xl font-bold text-blue-600"><?= $checkin_hari ?></p>
-      </div>
-      <div class="bg-white p-4 rounded shadow">
-        <p class="text-sm text-gray-500">Film Tayang</p>
-        <p class="text-3xl font-bold text-green-600"><?= $film_hari ?></p>
-      </div>
-      <div class="bg-white p-4 rounded shadow">
-        <p class="text-sm text-gray-500">Jadwal Hari Ini</p>
-        <p class="text-3xl font-bold text-gray-800"><?= $jadwal_hari ?></p>
       </div>
     </div>
 
