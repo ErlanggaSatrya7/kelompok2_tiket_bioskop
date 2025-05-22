@@ -8,7 +8,7 @@ $id_user = $_SESSION['id_user'];
 // Ambil tiket lengkap
 $tiket = $conn->query("
   SELECT t.*, f.judul_film, f.poster, j.waktu_tayang, j.harga, 
-         s.nama_studio, b.nama_bioskop 
+         s.nama_studio, b.nama_bioskop, t.status 
   FROM tiket t
   JOIN film f ON t.id_film = f.id_film
   JOIN jadwal j ON t.id_jadwal = j.id_jadwal
@@ -66,7 +66,7 @@ $foto = !empty($user['foto_profil']) && file_exists("../assets/img/profil/" . $u
             'digunakan'     => 'bg-green-100 text-green-700',
             'kedaluwarsa'   => 'bg-red-100 text-red-700',
             'dibatalkan'    => 'bg-gray-100 text-gray-600',
-            'dibayar', 
+            'dibayar'       => 'bg-yellow-100 text-yellow-700',
             'menunggu'      => 'bg-yellow-100 text-yellow-700',
             default         => 'bg-gray-100 text-gray-600',
           };
@@ -82,7 +82,7 @@ $foto = !empty($user['foto_profil']) && file_exists("../assets/img/profil/" . $u
             <p class="text-sm">Kursi: <strong><?= $t['nomor_kursi'] ?></strong> | Harga: Rp<?= number_format($t['harga'], 0, ',', '.') ?></p>
             <p class="text-sm mt-1">Status:
               <span class="px-2 py-1 rounded text-xs font-medium <?= $status_class ?>">
-                <?= strtoupper($t['status']) ?>
+                <?= !empty($t['status']) ? ucwords(str_replace('_', ' ', $t['status'])) : 'Tidak Diketahui' ?>
               </span>
             </p>
 
