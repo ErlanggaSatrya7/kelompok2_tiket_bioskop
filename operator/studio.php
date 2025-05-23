@@ -1,7 +1,10 @@
 <?php
+session_start();
 require_once('../config/koneksi.php');
 require_once('../config/auth.php');
 require_role('operator');
+
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT); // Penting untuk menangkap SIGNAL 45000
 
 $id_user = $_SESSION['id_user'];
 
@@ -16,21 +19,18 @@ $stmt->close();
 $error = '';
 $success = '';
 
-// Tambah studio
+// Tambah studio dengan prosedur
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tambah'])) {
     $nama = trim($_POST['nama_studio'] ?? '');
     $kapasitas = intval($_POST['kapasitas'] ?? 0);
 
-    if (!$nama || $kapasitas <= 0) {
-        $error = "Nama dan kapasitas harus diisi dengan benar.";
-    } else {
-        $stmt = $conn->prepare("INSERT INTO studio (nama_studio, kapasitas, id_bioskop) VALUES (?, ?, ?)");
+    try {
+        $stmt = $conn->prepare("CALL sp_tambah_studio_validasi(?, ?, ?)");
         $stmt->bind_param("sii", $nama, $kapasitas, $id_bioskop);
-        if ($stmt->execute()) {
-            $success = "Studio berhasil ditambahkan.";
-        } else {
-            $error = "Gagal menambahkan studio.";
-        }
+        $stmt->execute();
+        $success = "Studio berhasil ditambahkan.";
+    } catch (mysqli_sql_exception $e) {
+        $error = "Gagal menambahkan studio: " . $e->getMessage();
     }
 }
 
@@ -48,6 +48,7 @@ if (isset($_GET['hapus'])) {
 
 $studio = $conn->query("SELECT id_studio, nama_studio, kapasitas FROM studio WHERE id_bioskop = $id_bioskop ORDER BY nama_studio ASC");
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -67,11 +68,8 @@ $studio = $conn->query("SELECT id_studio, nama_studio, kapasitas FROM studio WHE
       <a href="dashboard.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="layout-dashboard"></i> Dashboard</a>
       <a href="studio.php" class="flex items-center gap-2 px-3 py-2 rounded bg-purple-100 text-purple-700 font-semibold"><i data-lucide="building"></i> Studio</a>
       <a href="jadwal.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="calendar-clock"></i> Jadwal</a>
-      <!-- <a href="scan_qr.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="scan"></i> Scan Tiket</a> -->
       <a href="tiket.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="ticket"></i> Tiket</a>
-      <!-- <a href="validasi_checkin.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="file-text"></i> Validasi Checkin</a> -->
       <a href="laporan.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="file-text"></i> Laporan</a>
-      <!-- <a href="audit_tiket.php" class="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-200"><i data-lucide="scan-line"></i> Audit Tiket</a> -->
       <a href="../pages/logout.php" class="flex items-center gap-2 px-3 py-2 mt-4 rounded bg-red-100 text-red-700 hover:bg-red-200"><i data-lucide="log-out"></i> Logout</a>
     </nav>
   </aside>
